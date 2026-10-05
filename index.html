@@ -357,7 +357,7 @@ function categoriaNomina(sit, estado){
   if (/\bART\b|LICENC|\bLIC\b|ENFERM|MATERN|PATERN|CONFLICTO|RESERVA|SUSPEN|ACCIDENT/.test(x)) return "med";
   return "act";
 }
-const SIT_TXT = k => { const n = norm(k); if (n==="ART") return "ART"; if (/ENFERM/.test(n)) return "Licencia por enfermedad"; if (/GREMIAL/.test(n)) return "Licencia gremial"; if (/TEMPORADA/.test(n)) return "Reserva de puesto (temporada)"; if (/RESERVA/.test(n)) return "Reserva de puesto"; if (/MATERN/.test(n)) return "Licencia por maternidad"; if (/CONFLICTO/.test(n)) return "En conflicto"; if (/PROGRAMADA/.test(n)) return "Baja programada"; if (/PROCESO/.test(n)) return "En proceso de baja"; if (/BAJA/.test(n)) return "Baja"; return titleCase(k); };
+const SIT_TXT = k => { const n = norm(k); if (n==="ART") return "ART"; if (/ENFERM/.test(n)) return "Licencia por enfermedad"; if (/GREMIAL/.test(n)) return "Licencia gremial"; if (/NO FIGURA/.test(n)) return "No figura en la nómina"; if (/TEMPORADA/.test(n)) return "Reserva de puesto (temporada)"; if (/RESERVA/.test(n)) return "Reserva de puesto"; if (/MATERN/.test(n)) return "Licencia por maternidad"; if (/CONFLICTO/.test(n)) return "En conflicto"; if (/PROGRAMADA/.test(n)) return "Baja programada"; if (/PROCESO/.test(n)) return "En proceso de baja"; if (/BAJA/.test(n)) return "Baja"; return titleCase(k); };
 
 let M; // modelo derivado
 function derive(){
@@ -390,7 +390,7 @@ function derive(){
                 const c2 = categoriaNomina(L.x, L.e);
                 cat = c2 === "act" ? null : c2; sit = c2 === "act" ? "" : (L.x || L.e);
               } else if (L.e && categoriaNomina("", L.e) === "baja") { cat = "baja"; sit = sit || L.e; } }
-      else revisar = true;
+      else { revisar = true; if (cat !== "baja") { cat = "baja"; sit = "No figura en la nómina"; } }
     }
     const k = norm(svc);
     if (!zonaKeys.has(k)) continue;
@@ -623,12 +623,13 @@ function openService(k, keepScroll){
   if (parcial.length) al.push(["warn", `${parcial.length === 1 ? "1 persona tiene" : parcial.length+" personas tienen"} días de vacaciones sin asignar.`]);
   const malas = svc.emps.filter(e => e.malas.length);
   if (malas.length) al.push(["warn", `${malas.length} con fechas para revisar (término anterior al inicio o incompletas).`]);
-  const rev = svc.emps.filter(e => e.revisar && e.cat !== "baja");
-  if (rev.length) al.push(["warn", `${rev.length === 1 ? "1 persona no figura" : rev.length+" personas no figuran"} en el listado actual de empleados. Posible baja, revisar.`]);
+  const rev = svc.emps.filter(e => e.revisar);
+  if (rev.length) al.push(["info", `${rev.length === 1 ? "1 persona ya no figura" : rev.length+" personas ya no figuran"} en la nómina y se ${rev.length === 1 ? "trata" : "tratan"} como baja.`]);
   const mov = svc.emps.filter(e => e.movido);
   if (mov.length) al.push(["info", `${mov.length === 1 ? "1 persona fue trasladada" : mov.length+" personas fueron trasladadas"} a este servicio según el listado actual.`]);
   const bajas = svc.emps.filter(e => e.cat === "baja");
-  if (bajas.length) al.push(["info", `${bajas.length === 1 ? "1 baja no se cuenta" : bajas.length+" bajas no se cuentan"} en la dotación.`]);
+  const bajasOtras = bajas.filter(e => !e.revisar);
+  if (bajasOtras.length) al.push(["info", `${bajasOtras.length === 1 ? "1 baja no se cuenta" : bajasOtras.length+" bajas no se cuentan"} en la dotación.`]);
   const cobN = ev.cob.length;
   const nota = al.find(a => a[0] === "note")
       ? `<div class="note ${ev.st === "crit" ? "crit" : ""}">${cobN ? `${cobN === 1 ? "La cobertura asignada no alcanza" : "Las "+cobN+" coberturas asignadas no alcanzan"} para el peor día. Revisá si hay coberturas de roles adicionales solicitadas.` : "Este servicio no tiene coberturas de vacaciones en la nómina. Revisá las coberturas de roles solicitadas."}</div>`
@@ -681,7 +682,7 @@ function openPerson(leg){
      ${(() => { const s = estadoVac(e, hoy); if (s.k === "baja" || s.k === "med") return ""; const v = vacTag(s, e);
         return `<dt>Vacaciones</dt><dd>${v.tag} ${esc(v.det)}${segHtml(s) ? `<div style="margin-top:6px">${segHtml(s)}</div>` : ""}${v.cap ? `<div class="cap">${esc(v.cap)}</div>` : ""}</dd>`; })()}</dl>
      <div class="sect"><h3>Vacaciones planificadas</h3>${pers ? `<ul class="alerts">${pers}</ul>` : `<p style="margin:0;color:var(--muted)">${e.cat === "act" ? "Todavía no tiene fechas cargadas." : "No corresponde por su situación actual."}</p>`}</div>
-     ${e.revisar ? `<div class="note">No figura en el listado actual de empleados. Posible baja, revisar.</div>` : ""}`;
+     ${e.revisar ? `<div class="note">No figura en la última nómina cargada, por eso se trata como baja y no cuenta en el servicio. Si es un error, vuelve a contar con la próxima carga de nómina.</div>` : ""}`;
   V.open = null;
   openPanel(nombreLindo(e.n), "Consulta por legajo", html);
 }
@@ -771,28 +772,34 @@ function previewListado(F, fname){
   const cambios = [], salen = [], entran = [];
   Object.values(old).forEach(e => { const n = nuevo[e.lg]; if (!n) { salen.push(e); return; } if (n.k !== e.k) cambios.push([e, n]); });
   Object.values(nuevo).forEach(n => { if (!old[n.lg]) entran.push(n); });
-  const bajas = after.emps.filter(e => e.cat === "baja" && !(old[e.lg] && old[e.lg].cat === "baja"));
+  const nuevasBajas = after.emps.filter(e => e.cat === "baja" && !(old[e.lg] && old[e.lg].cat === "baja"));
+  const bajas = nuevasBajas.filter(e => !e.revisar);           // marcadas en la nómina (en proceso de baja)
   const sitTxt = e => e.cat === "act" ? "Presente" : SIT_TXT(e.sit);
   const sitCambia = after.emps.filter(n => { const o = old[n.lg]; return o && n.cat !== "baja" && (o.cat !== n.cat || (n.cat === "med" && SIT_TXT(o.sit) !== SIT_TXT(n.sit))); });
   const ausNuevas = sitCambia.filter(n => n.cat === "med" && old[n.lg].cat !== "med");
   const vuelven = sitCambia.filter(n => n.cat === "act");
   const reactivados = after.emps.filter(n => old[n.lg] && old[n.lg].cat === "baja" && n.cat !== "baja");
   const cobertura = Object.values(map).filter(x => /COBERTURA/.test(norm(x.x))).length;
-  const revisar = after.emps.filter(e => e.revisar && e.cat !== "baja");
+  const revisar = nuevasBajas.filter(e => e.revisar);          // dejan de figurar en la nómina: pasan a baja
+  const yaFaltaban = after.emps.filter(e => e.revisar && e.sit === "No figura en la nómina" && old[e.lg] && old[e.lg].revisar).length;
+  const baseZona = before.emps.filter(e => e.cat !== "baja").length;
+  const faltanMuchos = baseZona && revisar.length / baseZona > 0.1;
   const knownSvc = new Set(DB.servicios.map(s => norm(s.n)));
   const desconocidos = [...new Set(Object.values(map).map(x => x.s).filter(s => s && !knownSvc.has(norm(s))))];
   const planLegs = new Set(DB.planif.map(e => normLeg(e.l)));
   const ignorados = Object.keys(map).filter(l => !planLegs.has(l)).length;
   const li = (e, extra) => `<li>${esc(nombreLindo(e.n))} <small>(${esc(e.l)})</small>${extra ? "<br><small>"+extra+"</small>" : ""}</li>`;
   const list = (t, arr) => arr.length ? `<div class="sect"><h3>${t}</h3><ul class="diff">${arr.join("")}</ul></div>` : "";
-  pending = {tipo: "listado", resumen: `${cambios.length} traslados en la zona, ${salen.length} salen, ${entran.length} entran, ${revisar.length} no figuran, ${bajas.length} bajas, ${ausNuevas.length} nuevas ausencias, ${vuelven.length} vuelven a estar presentes`, payload: () => map};
+  pending = {tipo: "listado", resumen: `${cambios.length} traslados en la zona, ${salen.length} salen, ${entran.length} entran, ${revisar.length} dejan de figurar (baja), ${bajas.length} en proceso de baja, ${ausNuevas.length} nuevas ausencias, ${vuelven.length} vuelven a estar presentes`, payload: () => map};
   $("preview").innerHTML = `<p style="margin:0">Archivo reconocido como <strong>listado actual de empleados</strong> (${esc(fname)}, ${Object.keys(map).length} legajos).</p>
-    <div class="counts"><div><span class="count">${cambios.length}</span>traslados dentro de la zona</div><div><span class="count">${salen.length}</span>salen de la zona</div><div><span class="count">${entran.length}</span>entran a la zona</div><div><span class="count">${revisar.length}</span>no figuran (posible baja)</div><div><span class="count">${bajas.length}</span>nuevas bajas</div><div><span class="count">${ausNuevas.length}</span>nuevas ausencias (ART, licencias)</div><div><span class="count">${vuelven.length}</span>vuelven a estar presentes</div><div><span class="count">${ignorados}</span>ingresos nuevos, se ignoran</div></div>
+    <div class="counts"><div><span class="count">${cambios.length}</span>traslados dentro de la zona</div><div><span class="count">${salen.length}</span>salen de la zona</div><div><span class="count">${entran.length}</span>entran a la zona</div><div><span class="count">${revisar.length}</span>dejan de figurar (pasan a baja)</div><div><span class="count">${bajas.length}</span>en proceso de baja</div><div><span class="count">${ausNuevas.length}</span>nuevas ausencias (ART, licencias)</div><div><span class="count">${vuelven.length}</span>vuelven a estar presentes</div><div><span class="count">${ignorados}</span>ingresos nuevos, se ignoran</div></div>
     ${list("Traslados", cambios.map(([o,n]) => li(n, esc(svcN(before,o.k))+" pasa a "+esc(svcN(after,n.k)) + (supN(before,o.k) !== supN(after,n.k) ? ". Cambia de supervisor: de "+esc(supN(before,o.k)||"sin asignar")+" a "+esc(supN(after,n.k)||"sin asignar") : ""))))}
     ${list("Salen de tu zona", salen.map(e => li(e, "Desde "+esc(svcN(before,e.k))+" hacia "+esc((map[e.lg]||{}).s || "?"))))}
     ${list("Entran a tu zona", entran.map(e => li(e, "Hacia "+esc(svcN(after,e.k)))))}
-    ${list("No figuran en el listado actual", revisar.map(e => li(e, esc(svcN(after,e.k)))))}
-    ${list("Bajas según el listado", bajas.map(e => li(e, esc(SIT_TXT(e.sit||"")))))}
+    ${faltanMuchos ? `<div class="note crit">${revisar.length} personas de tu zona no figuran en este archivo, más del 10% del personal. Revisá que sea la nómina completa antes de aplicar.</div>` : ""}
+    ${list("Dejan de figurar en la nómina (se tratan como baja)", revisar.map(e => li(e, esc(svcN(after,e.k)))))}
+    ${yaFaltaban ? `<p style="margin:0;color:var(--muted);font-size:.9rem">${yaFaltaban} personas ya no figuraban en la nómina anterior y siguen como baja.</p>` : ""}
+    ${list("En proceso de baja según la nómina", bajas.map(e => li(e, esc(SIT_TXT(e.sit||"")))))}
     ${list("Cambios de situación", sitCambia.map(n => li(n, esc(sitTxt(old[n.lg]))+" pasa a "+esc(sitTxt(n))+(reactivados.includes(n) ? ". Figuraba como baja en la planificación" : "")+". "+esc(svcN(after,n.k)))))}
     ${cS < 0 ? `<div class="note">El archivo no tiene columna Situación: solo se actualizan destinos y bajas.</div>` : ""}
     ${cobertura ? `<p style="margin:0;color:var(--muted);font-size:.9rem">${cobertura} personas figuran como cobertura de vacaciones en la nómina.</p>` : ""}
