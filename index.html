@@ -13,7 +13,7 @@
   --paper:#F3F3F1; --surface:#FFFFFF; --ink:#1F2328; --muted:#62676E; --line:#DEDFDC; --brand:#1F2328;
   --ok:#2F9468; --warn:#D9A300; --crit:#C9302C; --none:#9AA5B1;
   --ok-bg:#E3F2EA; --warn-bg:#FBF3D2; --crit-bg:#F9DEDC; --none-bg:#E7EBEF;
-  --vac:#3A78C2; --med:#8A55B5; --pres:#C3CCD6;
+  --vac:#3A78C2; --med:#8A55B5; --pres:#C3CCD6; --cob:#0F8B8D;
   --radius-l:14px; --radius-s:6px;
   --f-body:"Barlow", "Segoe UI", system-ui, -apple-system, sans-serif;
   --f-head:"Barlow Semi Condensed", "Arial Narrow", "Segoe UI", system-ui, sans-serif;
@@ -25,14 +25,14 @@
     --paper:#17191C; --surface:#212428; --ink:#ECEDEE; --muted:#A2A7AD; --line:#33373C; --brand:#ECEDEE;
     --ok:#4CB886; --warn:#E8A936; --crit:#E8645A; --none:#6C7884;
     --ok-bg:#1C3329; --warn-bg:#3A2E15; --crit-bg:#3D1F1C; --none-bg:#25303B;
-    --vac:#64A0E8; --med:#B38AD8; --pres:#3D4956; color-scheme:dark;
+    --vac:#64A0E8; --med:#B38AD8; --pres:#3D4956; --cob:#3CC4C6; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --paper:#17191C; --surface:#212428; --ink:#ECEDEE; --muted:#A2A7AD; --line:#33373C; --brand:#ECEDEE;
   --ok:#4CB886; --warn:#E8A936; --crit:#E8645A; --none:#6C7884;
   --ok-bg:#1C3329; --warn-bg:#3A2E15; --crit-bg:#3D1F1C; --none-bg:#25303B;
-  --vac:#64A0E8; --med:#B38AD8; --pres:#3D4956; color-scheme:dark;
+  --vac:#64A0E8; --med:#B38AD8; --pres:#3D4956; --cob:#3CC4C6; color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -141,7 +141,7 @@ h1,h2,h3{font-family:var(--f-head);font-weight:600;margin:0;line-height:1.15}
 .state .ppl .dot{width:12px;height:12px}
 .bars{display:flex;align-items:flex-end;gap:3px;height:70px;padding-bottom:2px;border-bottom:1px solid var(--line)}
 .bars i{flex:1;min-width:3px;border-radius:3px 3px 0 0;background:var(--ok);min-height:3px}
-.bars i.warn{background:var(--warn)} .bars i.crit{background:var(--crit)} .bars i.none{background:var(--none)} .bars i.zero{background:var(--line)}
+.bars i.cub{background:var(--cob)} .bars i.warn{background:var(--warn)} .bars i.crit{background:var(--crit)} .bars i.none{background:var(--none)} .bars i.zero{background:var(--line)}
 .barslbl{display:flex;justify-content:space-between;color:var(--muted);font-size:.8rem;margin-top:4px}
 .sect h3{font-size:1.05rem;margin-bottom:8px}
 .note{padding:12px 14px;border-radius:10px;border:1px solid var(--warn);background:var(--warn-bg);font-size:.94rem}
@@ -163,6 +163,13 @@ h1,h2,h3{font-family:var(--f-head);font-weight:600;margin:0;line-height:1.15}
 details summary{cursor:pointer;color:var(--brand);font-weight:500}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.95rem}
 .kv dt{color:var(--muted)} .kv dd{margin:0}
+
+/* Coberturas de vacaciones */
+.dot.cob{background:transparent;box-shadow:inset 0 0 0 2.5px var(--cob)}
+.cobchip{display:inline-flex;align-items:center;gap:4px;align-self:flex-start;font-size:.76rem;font-weight:600;padding:1px 8px 1px 6px;border-radius:999px;background:color-mix(in srgb,var(--cob) 16%,transparent);color:var(--cob)}
+.cobchip svg{flex:none}
+.note.cubierto{border-color:var(--cob);background:color-mix(in srgb,var(--cob) 12%,var(--surface))}
+.sin{color:var(--muted);font-size:.9rem;margin-top:2px}
 
 /* Estado de vacaciones por persona */
 .tprog{height:4px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:2px}
@@ -253,6 +260,7 @@ details summary{cursor:pointer;color:var(--brand);font-weight:500}
       <span><i class="dot"></i>Presente</span>
       <span><i class="dot vac"></i>Vacaciones</span>
       <span><i class="dot med"></i>ART o licencia</span>
+      <span><i class="dot cob"></i>Cobertura</span>
     </div>
   </div>
 
@@ -364,13 +372,16 @@ function derive(){
   const rawName = new Map(); DB.zona.forEach(z => rawName.set(norm(z), z));
   const services = new Map();
   const ensure = k => {
-    if (!services.has(k)) { const info = svcByKey.get(k); services.set(k, {k, n: info ? info.n : (rawName.get(k) || k), sup: info && info.sup ? info.sup : "", emps:[]}); }
+    if (!services.has(k)) { const info = svcByKey.get(k); services.set(k, {k, n: info ? info.n : (rawName.get(k) || k), sup: info && info.sup ? info.sup : "", emps:[], cob:[]}); }
     return services.get(k);
   };
   zonaKeys.forEach(ensure);
-  const emps = [];
+  const emps = [], coberturas = [];
+  const esCob = L => L && /COBERTURA/.test(norm(L.x));
+  const planLegs = new Set();
   for (const e of DB.planif){
-    const lg = normLeg(e.l);
+    const lg = normLeg(e.l); planLegs.add(lg);
+    if (listado && esCob(listado[lg])) continue;   // figura como cobertura: se cuenta aparte
     let svc = e.s, cat = categoria(e.x), sit = e.x, revisar = false, movido = false;
     if (listado){
       const L = listado[lg];
@@ -389,8 +400,15 @@ function derive(){
     const emp = {l:e.l, lg, n:e.n, k, d:e.d, per, malas, sit, cat: cat || "act", revisar, movido, asign};
     emps.push(emp); ensure(k).emps.push(emp);
   }
+  // Roles de cobertura de vacaciones según la nómina (no tienen vacaciones planificadas)
+  if (listado) Object.keys(listado).forEach(lg => {
+    const L = listado[lg]; if (!esCob(L)) return;
+    const k = norm(L.s); if (!zonaKeys.has(k)) return;
+    const c = {l: lg.padStart(5,"0"), lg, n: L.n, k, sit: L.x};
+    coberturas.push(c); ensure(k).cob.push(c);
+  });
   const sups = [...new Set([...services.values()].map(s => s.sup))].sort((a,b) => (a===""?1:0)-(b===""?1:0) || a.localeCompare(b));
-  M = {services, emps, sups};
+  M = {services, emps, sups, coberturas};
 }
 
 /* ============ Cálculo de estado ============ */
@@ -403,22 +421,25 @@ function dayStatus(svc, day){
   let dot = 0, vac = 0, med = 0;
   for (const e of svc.emps){ if (e.cat === "baja") continue; dot++; const t = absType(e, day); if (t==="vac") vac++; else if (t==="med") med++; }
   const abs = vac + med;
-  let st;
-  if (dot === 0) st = "none";
-  else if (dot <= SERVICIO_CHICO) st = abs === 0 ? "ok" : abs >= dot ? "crit" : "warn";
-  else { const p = abs/dot; st = p > UMBRAL_CRITICO ? "crit" : p >= UMBRAL_ATENCION ? "warn" : "ok"; }
-  return {day, dot, vac, med, abs, st};
+  const nivel = a => dot === 0 ? "none" : dot <= SERVICIO_CHICO ? (a === 0 ? "ok" : a >= dot ? "crit" : "warn")
+    : (a/dot > UMBRAL_CRITICO ? "crit" : a/dot >= UMBRAL_ATENCION ? "warn" : "ok");
+  const cob = (svc.cob || []).length, cubre = Math.min(cob, abs), neto = abs - cubre;
+  // st: estado real, descontando las coberturas; stSin: cómo estaría sin ellas
+  return {day, dot, vac, med, abs, cob, cubre, neto, st: nivel(neto), stSin: nivel(abs)};
 }
 function rangeDays(r){ const out = []; for (let d = r.a; d <= r.b; d = addDays(d,1)) out.push(d); return out; }
 function evalService(svc, r){
   const days = rangeDays(r).map(d => dayStatus(svc, d));
   let worst = days[0];
   days.forEach(x => { if (RANK[x.st] > RANK[worst.st] || (x.st === worst.st && x.abs > worst.abs)) worst = x; });
+  let worstSin = days[0];
+  days.forEach(x => { if (RANK[x.stSin] > RANK[worstSin.stSin] || (x.stSin === worstSin.stSin && x.abs > worstSin.abs)) worstSin = x; });
   const people = svc.emps.filter(e => e.cat !== "baja").map(e => {
     let t = null; if (e.cat === "med") t = "med"; else for (const d of days) if (absType(e, d.day)) { t = "vac"; break; }
     return {e, t};
   }).sort((x,y) => (x.t?0:1)-(y.t?0:1) || (x.t==="med"?0:1)-(y.t==="med"?0:1));
-  return {svc, days, worst, st: worst.st, people};
+  const cubreMax = Math.max(0, ...days.map(x => x.cubre));
+  return {svc, days, worst, st: worst.st, stSin: worstSin.stSin, worstSin, people, cob: svc.cob || [], cubreMax};
 }
 
 /* ============ Estado de vacaciones respecto de hoy (fecha del dispositivo) ============ */
@@ -547,13 +568,15 @@ function tile(ev){
   const b = document.createElement("button");
   const n = ev.people.length;
   b.className = "tile " + ev.st + (n >= 30 ? " w3" : n >= 14 ? " w2" : "");
-  const dots = ev.people.map(p => `<i class="dot ${p.t||""}"></i>`).join("");
+  const dots = ev.people.map(p => `<i class="dot ${p.t||""}"></i>`).join("") + ev.cob.map(() => `<i class="dot cob"></i>`).join("");
+  const SH = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/></svg>`;
+  const chip = ev.cubreMax ? `<span class="cobchip">${SH}Cubierto por ${ev.cubreMax}</span>` : "";
   const flag = ev.st === "crit" ? `<span class="flag" aria-hidden="true">!</span>` : "";
   const out = ev.people.filter(p => p.t).length;
-  b.setAttribute("aria-label", `${ev.svc.n}: ${ESTADO_TXT[ev.st]}. ${out} de ${n} fuera en el período.`);
+  b.setAttribute("aria-label", `${ev.svc.n}: ${ESTADO_TXT[ev.st]}. ${out} de ${n} fuera en el período.${ev.cob.length ? ` ${ev.cob.length} coberturas de vacaciones.` : ""}`);
   const av = avanceServicio(ev.svc, todayIso());
   b.title = av.total ? `${av.pct}% de los días de vacaciones ya disfrutados` : "";
-  b.innerHTML = `${flag}<span class="tn">${esc(ev.svc.n)}</span><span class="ppl">${dots || '<span class="tag">Sin personal</span>'}</span>${av.total ? `<span class="tprog" aria-hidden="true"><i style="width:${av.pct}%"></i></span>` : ""}`;
+  b.innerHTML = `${flag}<span class="tn">${esc(ev.svc.n)}</span>${chip}<span class="ppl">${dots || '<span class="tag">Sin personal</span>'}</span>${av.total ? `<span class="tprog" aria-hidden="true"><i style="width:${av.pct}%"></i></span>` : ""}`;
   b.onclick = () => openService(ev.svc.k);
   return b;
 }
@@ -577,18 +600,19 @@ function openService(k, keepScroll){
   const br = V.mode === "dia" ? {a:r.a, b:addDays(r.a,13)} : r;
   const bd = rangeDays(br).map(d => dayStatus(svc, d));
   const bars = bd.map(x => { const h = x.dot ? Math.max(4, Math.round(100*x.abs/x.dot)) : 4;
-    return `<i class="${x.abs ? x.st : (x.dot ? "zero" : "none")}" style="height:${h}%" title="${fmtCorta(x.day)}: ${x.abs} de ${x.dot} fuera"></i>`; }).join("");
+    return `<i class="${x.abs ? (x.neto ? x.st : "cub") : (x.dot ? "zero" : "none")}" style="height:${h}%" title="${fmtCorta(x.day)}: ${x.abs} de ${x.dot} fuera${x.cubre ? ", "+x.cubre+" cubiertos" : ""}"></i>`; }).join("");
   const w = ev.worst;
   const out = ev.people.filter(p => p.t);
-  const titulo = {ok: "Cobertura en orden", warn: "Requiere atención", crit: (w.dot && w.abs >= w.dot) ? "Servicio descubierto" : "Cobertura crítica", none:"Sin personal activo"}[ev.st];
+  const titulo = {ok: "Cobertura en orden", warn: "Requiere atención", crit: (w.dot && w.neto >= w.dot) ? "Servicio descubierto" : "Cobertura crítica", none:"Sin personal activo"}[ev.st];
   const cuando = V.mode === "dia" ? "" : (w.abs ? ` el ${fmtCorta(w.day)}` : "");
   const stateHtml = `<div class="state ${ev.st}"><div><div class="big">${titulo}</div>
-     <div>${w.dot ? `${w.abs} de ${w.dot} fuera${cuando}${V.mode!=="dia" && w.abs ? " (peor día)" : ""}` : "No hay personal activo en la planificación."}</div>
-     <div class="ppl">${ev.people.map(p => `<i class="dot ${p.t||""}"></i>`).join("")}</div></div></div>`;
+     <div>${w.dot ? `${w.abs} de ${w.dot} fuera${cuando}${V.mode!=="dia" && w.abs ? " (peor día)" : ""}${w.cubre ? `, ${w.cubre === w.abs ? (w.abs === 1 ? "cubierto" : "todos cubiertos") : w.cubre+" cubiertos"} por coberturas` : ""}` : "No hay personal activo en la planificación."}</div>
+     ${ev.stSin !== ev.st ? `<div class="sin">Sin las coberturas estaría en estado ${ESTADO_TXT[ev.stSin].toLowerCase()}${V.mode !== "dia" && ev.worstSin.abs ? " ("+ev.worstSin.abs+" fuera el "+fmtCorta(ev.worstSin.day)+")" : ""}.</div>` : ""}
+     <div class="ppl">${ev.people.map(p => `<i class="dot ${p.t||""}"></i>`).join("")}${ev.cob.map(() => `<i class="dot cob"></i>`).join("")}</div></div></div>`;
   // alertas
   const al = [];
   if (ev.st === "warn" || ev.st === "crit") al.push(["note"]);
-  const desc = ev.days.find(x => x.dot && x.abs >= x.dot);
+  const desc = ev.days.find(x => x.dot && x.neto >= x.dot);
   if (desc) al.push(["crit", `Queda sin personal presente${V.mode==="dia" ? "" : " desde el "+fmtCorta(desc.day)}.`]);
   const acum = ev.days.find(x => x.vac && x.med);
   if (acum) al.push(["warn", `Se suman vacaciones con ART o licencias${V.mode==="dia" ? "" : " (por ejemplo, el "+fmtCorta(acum.day)+")"}.`]);
@@ -605,7 +629,11 @@ function openService(k, keepScroll){
   if (mov.length) al.push(["info", `${mov.length === 1 ? "1 persona fue trasladada" : mov.length+" personas fueron trasladadas"} a este servicio según el listado actual.`]);
   const bajas = svc.emps.filter(e => e.cat === "baja");
   if (bajas.length) al.push(["info", `${bajas.length === 1 ? "1 baja no se cuenta" : bajas.length+" bajas no se cuentan"} en la dotación.`]);
-  const nota = al.find(a => a[0] === "note") ? `<div class="note ${ev.st === "crit" ? "crit" : ""}">Revisá las coberturas de roles solicitadas para este servicio.</div>` : "";
+  const cobN = ev.cob.length;
+  const nota = al.find(a => a[0] === "note")
+      ? `<div class="note ${ev.st === "crit" ? "crit" : ""}">${cobN ? `${cobN === 1 ? "La cobertura asignada no alcanza" : "Las "+cobN+" coberturas asignadas no alcanzan"} para el peor día. Revisá si hay coberturas de roles adicionales solicitadas.` : "Este servicio no tiene coberturas de vacaciones en la nómina. Revisá las coberturas de roles solicitadas."}</div>`
+    : ev.cubreMax ? `<div class="note cubierto">Las ausencias del período están cubiertas por ${ev.cubreMax === 1 ? "1 cobertura" : ev.cubreMax+" coberturas"} de vacaciones.</div>` : "";
+  if (cobN && !ev.days.some(x => x.abs)) al.push(["info", `${cobN === 1 ? "1 cobertura de vacaciones asignada" : cobN+" coberturas de vacaciones asignadas"} sin ausencias en el período: podría reasignarse.`]);
   const alertsHtml = al.filter(a => a[0] !== "note").map(([c,t]) => `<li class="${c}">${esc(t)}</li>`).join("");
   const person = (e, t) => `<li><i class="dot ${t||""}"></i><button class="who" data-leg="${esc(e.l)}">${esc(nombreLindo(e.n))}<small>Legajo ${esc(e.l)}</small></button>
       <span class="when">${t === "med" ? `<span class="tag med">${esc(SIT_TXT(e.sit))}</span>` : t === "vac" ? `<span class="tag vac">Vacaciones</span><br>${esc(periodoTxt(e, r))}` : (e.per.length ? esc(e.per.map(([a,b]) => fmtCorta(a)+" al "+fmtCorta(b)).join(", ")) : (e.cat==="baja" ? `<span class="tag">${esc(SIT_TXT(e.sit))}</span>` : `<span class="tag">Sin fechas</span>`))}</span></li>`;
@@ -615,6 +643,7 @@ function openService(k, keepScroll){
       <div class="barslbl"><span>${fmtCorta(br.a)}</span><span>${fmtCorta(br.b)}</span></div></div>
     ${alertsHtml ? `<div class="sect"><h3>Alertas</h3><ul class="alerts">${alertsHtml}</ul></div>` : ""}
     <div class="sect"><h3>${out.length ? "Fuera del servicio en el período" : "Nadie fuera del servicio en el período"}</h3>${out.length ? `<ul class="people">${out.map(p => person(p.e, p.t)).join("")}</ul>` : ""}</div>
+    ${ev.cob.length ? `<div class="sect"><h3>Coberturas de vacaciones (${ev.cob.length})</h3><ul class="people">${ev.cob.map(c => `<li><i class="dot cob"></i><span class="who">${esc(nombreLindo(c.n))}<small>Legajo ${esc(c.l)}</small></span><span class="when"><span class="cobchip">${esc(c.sit)}</span></span></li>`).join("")}</ul></div>` : ""}
     ${vacSection(svc)}`;
   if (keepScroll && $("panel").classList.contains("on") && $("ptitle").textContent === svc.n){ const s = $("pbody").scrollTop; $("pbody").innerHTML = html; $("pbody").scrollTop = s; $("psub").textContent = (svc.sup || "Sin supervisor asignado")+". "+rangeLabel(r)+"."; }
   else openPanel(svc.n, (svc.sup || "Sin supervisor asignado")+". "+rangeLabel(r)+".", html);
