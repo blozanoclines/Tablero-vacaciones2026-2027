@@ -164,6 +164,70 @@ details summary{cursor:pointer;color:var(--brand);font-weight:500}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:.95rem}
 .kv dt{color:var(--muted)} .kv dd{margin:0}
 
+/* Pestañas y vistas nuevas */
+[hidden]{display:none!important}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.tabsbar{background:var(--surface);border-bottom:1px solid var(--line)}
+.tabsbar .in{max-width:1240px;margin:0 auto;padding:0 12px;display:flex;flex-wrap:wrap;gap:2px}
+.tabsbar button{min-height:50px;padding:0 18px;border:0;border-bottom:4px solid transparent;background:none;font-weight:500;font-size:1rem;color:var(--muted)}
+.tabsbar button[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--orange)}
+.toprow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-bottom:18px}
+.toprow h2{font-size:1.5rem}
+.zsel{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.95rem}
+.zsel select{min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px;margin-bottom:22px}
+.kpi{background:var(--surface);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.kpi .k{color:var(--muted);font-size:.9rem;font-weight:500}
+.kpi .v{font-family:var(--f-head);font-weight:700;font-size:2.4rem;line-height:1}
+.kpi .v small{font-size:1.1rem;color:var(--muted);font-weight:600}
+.kpi .d{color:var(--muted);font-size:.84rem}
+.kpi .bar{display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px;background:var(--line)}
+.kpi .bar i{display:block;height:100%}
+.cols{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;margin-bottom:22px}
+.card{background:var(--surface);border-radius:16px;padding:20px 22px;min-width:0}
+.card h3{font-size:1.3rem;margin-bottom:2px}
+.card .sub2{color:var(--muted);font-size:.9rem;margin:0 0 12px}
+.tscroll{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:.95rem}
+.tbl th{text-align:left;color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;font-weight:600;padding:8px 8px 10px}
+.tbl td{padding:12px 8px;border-top:1px solid var(--line);vertical-align:middle}
+.tbl th:first-child,.tbl td:first-child{padding-left:0}
+.tbl .num{text-align:right;white-space:nowrap}
+.tbl .muted{color:var(--muted)}
+.stk{display:flex;height:12px;border-radius:4px;overflow:hidden;gap:2px}
+.stk i{display:block;height:100%}
+.stk .ok{background:var(--ok)} .stk .warn{background:var(--warn)} .stk .crit{background:var(--crit)} .stk .none{background:var(--none)}
+.minibar{display:flex;align-items:center;gap:8px}
+.minibar span{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.minibar span i{display:block;height:100%;background:var(--vac)}
+.ghostbtn{min-height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-weight:600;font-size:.88rem;white-space:nowrap}
+.attn{list-style:none;margin:0;padding:0}
+.attn button{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px 12px;width:100%;min-height:52px;padding:10px 0;border:0;border-top:1px solid var(--line);background:none;text-align:left}
+.attn .nm2{flex:1;min-width:0}
+.attn .nm2 b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:600;line-height:1.25}
+.attn .nm2 small{display:block;color:var(--muted);margin-top:2px}
+.attn .r{font-size:.85rem;color:var(--muted);text-align:right;max-width:120px}
+.stpill{flex:none;padding:2px 10px;border-radius:999px;font-size:.76rem;font-weight:700}
+.stpill.crit{background:var(--crit-bg);color:color-mix(in srgb,var(--crit) 75%,var(--ink))}
+.stpill.warn{background:var(--warn-bg);color:color-mix(in srgb,var(--warn) 55%,var(--ink))}
+.segcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+.segcard{display:flex;align-items:center;gap:14px;min-height:76px;padding:14px 16px;border-radius:14px;border:2px solid transparent;text-align:left}
+.segcard .n{font-family:var(--f-head);font-weight:700;font-size:2.1rem;line-height:1}
+.segcard .t{font-weight:600}
+.segcard .t small{display:block;font-weight:500;font-size:.8rem;opacity:.85}
+.segcard.sin{background:var(--warn-bg);color:color-mix(in srgb,var(--warn) 45%,var(--ink))}
+.segcard.lic{background:color-mix(in srgb,var(--med) 15%,var(--surface));color:color-mix(in srgb,var(--med) 70%,var(--ink))}
+.segcard.con{background:var(--crit-bg);color:color-mix(in srgb,var(--crit) 70%,var(--ink))}
+.segcard[aria-selected="true"]{border-color:currentColor}
+.sitpill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.8rem;font-weight:600;white-space:nowrap}
+.sitpill.sin{background:var(--warn-bg);color:color-mix(in srgb,var(--warn) 45%,var(--ink))}
+.sitpill.lic{background:color-mix(in srgb,var(--med) 15%,var(--surface));color:color-mix(in srgb,var(--med) 70%,var(--ink))}
+.sitpill.con{background:var(--crit-bg);color:color-mix(in srgb,var(--crit) 70%,var(--ink))}
+.linkish{border:0;background:none;padding:0;text-align:left;color:inherit;font:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.linkish.who{font-weight:600;text-decoration:none}
+.revchip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--crit-bg);color:color-mix(in srgb,var(--crit) 75%,var(--ink));font-size:.75rem;font-weight:600}
+@media (max-width:640px){.tabsbar button{flex:1;padding:0 8px;font-size:.92rem}.kpi .v{font-size:2rem}.card{padding:16px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.segcards{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.segcard{flex-direction:column;align-items:flex-start;gap:4px;min-height:0;padding:10px 12px}.segcard .n{font-size:1.7rem}.segcard .t{font-size:.84rem;line-height:1.2}.segcard .t small{display:none}}
+
 /* Coberturas de vacaciones */
 .dot.cob{background:transparent;box-shadow:inset 0 0 0 2.5px var(--cob)}
 .cobchip{display:inline-flex;align-items:center;gap:4px;align-self:flex-start;font-size:.76rem;font-weight:600;padding:1px 8px 1px 6px;border-radius:999px;background:color-mix(in srgb,var(--cob) 16%,transparent);color:var(--cob)}
@@ -244,8 +308,13 @@ details summary{cursor:pointer;color:var(--brand);font-weight:500}
     </div>
   </div>
 </header>
+<nav class="tabsbar" aria-label="Secciones"><div class="in" role="tablist">
+  <button role="tab" data-tab="resumen" aria-selected="true">Resumen</button>
+  <button role="tab" data-tab="servicios" aria-selected="false">Servicios</button>
+  <button role="tab" data-tab="seguimiento" aria-selected="false">Seguimiento de personal</button>
+</div></nav>
 <div class="wrap">
-  <div class="controls">
+  <div class="controls" id="controls">
     <div class="seg" role="group" aria-label="Período">
       <button data-mode="dia" aria-pressed="true">Día</button>
       <button data-mode="semana" aria-pressed="false">Semana</button>
@@ -257,7 +326,7 @@ details summary{cursor:pointer;color:var(--brand);font-weight:500}
       <button id="next" aria-label="Período siguiente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 6 6 6-6 6"/></svg></button>
       <button class="linkbtn" id="today">Hoy</button>
     </div>
-    <div class="legend" aria-label="Referencias">
+    <div class="legend" id="legend" aria-label="Referencias">
       <span><i class="dot"></i>Presente</span>
       <span><i class="dot vac"></i>Vacaciones</span>
       <span><i class="dot med"></i>ART o licencia</span>
@@ -343,6 +412,7 @@ function cargar(silencioso){
       $("board").innerHTML = `<div class="emptystate">No se pudieron cargar los datos. ${esc(err.message)}<br><br><button class="btn" id="retry">Reintentar</button></div>`;
       $("retry").onclick = () => cargar(); });
 }
+
 
 function categoria(sit){
   const k = norm(sit);
@@ -508,7 +578,8 @@ function avanceServicio(svc, hoy){
 }
 
 /* ============ Estado de la vista ============ */
-const V = {mode:"dia", date: todayIso(), sup: null, open: null};
+const TABS = ["resumen","servicios","seguimiento"];
+const V = {mode:"dia", date: todayIso(), sup: null, open: null, tab: TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "resumen", seg: "lic"};
 function range(){
   if (V.mode === "dia") return {a:V.date, b:V.date};
   if (V.mode === "semana"){ const dow = (fromIso(V.date).getUTCDay()+6)%7; const a = addDays(V.date,-dow); return {a, b:addDays(a,6)}; }
@@ -530,6 +601,7 @@ function shift(dir){
 /* ============ Render principal ============ */
 const $ = id => document.getElementById(id);
 function render(){
+  if (!M) return;
   const r = range();
   $("plabel").textContent = rangeLabel(r);
   const t0 = todayIso(), inR = t0 >= r.a && t0 <= r.b; $("today").disabled = inR;
@@ -543,6 +615,12 @@ function render(){
   const sorter = (a,b) => RANK[b.st]-RANK[a.st] || b.worst.abs/(b.worst.dot||1) - a.worst.abs/(a.worst.dot||1) || b.svc.emps.length - a.svc.emps.length;
   bySup.forEach(list => list.sort(sorter));
 
+  document.querySelectorAll(".tabsbar [data-tab]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === V.tab)));
+  $("controls").hidden = V.tab === "seguimiento";
+  $("legend").style.display = V.tab === "servicios" ? "" : "none";
+  $("zones").hidden = V.tab !== "servicios";
+  if (V.tab === "resumen") { renderResumen(r, evals, bySup, sorter); if (V.open) openService(V.open, true); return; }
+  if (V.tab === "seguimiento") { renderSeguimiento(); if (V.open) openService(V.open, true); return; }
   // franja de zonas
   const zones = $("zones"); zones.innerHTML = "";
   const outCount = list => list.reduce((t,ev) => t + ev.people.filter(p => p.t).length, 0);
@@ -583,6 +661,93 @@ function render(){
   });
   if (V.open) openService(V.open, true);
 }
+/* ============ Vista Resumen ============ */
+function zonaSelect(){
+  const cur = V.sup === null ? "__all" : (V.sup === "" ? "__none" : V.sup);
+  const opts = [["__all", "Toda la zona"]].concat(M.sups.map(s => [s === "" ? "__none" : s, s || "Sin supervisor asignado"]));
+  return `<label class="zsel">Zona <select id="zsel">${opts.map(([v,l]) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></label>`;
+}
+function bindZona(){ const s = $("zsel"); if (s) s.onchange = () => { V.sup = s.value === "__all" ? null : (s.value === "__none" ? "" : s.value); render(); }; }
+function fueraTxt(n){ return V.mode === "dia" ? `${n} fuera hoy` : `${n} con ausencias`; }
+function renderResumen(r, evals, bySup, sorter){
+  const hoy = todayIso();
+  const L = V.sup === null ? evals : (bySup.get(V.sup) || []);
+  let dot = 0, vac = 0, med = 0, cob = 0, d = 0, tt = 0; const c = {crit:0, warn:0, ok:0, none:0};
+  L.forEach(ev => { dot += ev.people.length; ev.people.forEach(p => { if (p.t === "vac") vac++; else if (p.t === "med") med++; });
+    cob += ev.cob.length; c[ev.st]++; const a = avanceServicio(ev.svc, hoy); d += a.disf; tt += a.total; });
+  const pct = tt ? Math.round(100*d/tt) : 0, fuera = vac + med;
+  const per = V.mode === "dia" ? "hoy" : V.mode === "semana" ? "en la semana" : "en el mes";
+  const kpis = `<section class="kpis" aria-label="Indicadores">
+    <div class="kpi"><span class="k">Dotación activa</span><span class="v">${dot}</span><span class="d">personas, sin contar bajas</span></div>
+    <div class="kpi"><span class="k">${V.mode === "dia" ? "Fuera del servicio hoy" : "Con ausencias "+per}</span><span class="v">${fuera}</span>
+      <span class="bar">${fuera ? `<i style="flex:${vac};background:var(--vac)"></i><i style="flex:${med};background:var(--med)"></i>` : ""}</span>
+      <span class="d">${vac} de vacaciones, ${med} por ART, licencia o conflicto</span></div>
+    <div class="kpi"><span class="k">Servicios con alerta</span><span class="v">${c.crit + c.warn}<small> de ${L.length}</small></span><span class="d">${c.crit} ${c.crit === 1 ? "crítico" : "críticos"}, ${c.warn} en atención ${per}</span></div>
+    <div class="kpi"><span class="k">Coberturas de vacaciones</span><span class="v">${cob}</span><span class="d">roles de cobertura en la nómina</span></div>
+    <div class="kpi"><span class="k">Vacaciones disfrutadas</span><span class="v">${pct}%</span><span class="bar"><i style="width:${pct}%;background:var(--vac)"></i></span><span class="d">de los días de la temporada, al ${fmtCorta(hoy)}</span></div>
+  </section>`;
+  const zonasSup = V.sup === null ? M.sups : [V.sup];
+  const filas = zonasSup.map(s => { const list = bySup.get(s) || []; const z = {crit:0, warn:0, ok:0, none:0}; let f = 0, dt = 0, cb = 0, dd = 0, t2 = 0;
+    list.forEach(ev => { z[ev.st]++; f += ev.people.filter(p => p.t).length; dt += ev.people.length; cb += ev.cob.length; const a = avanceServicio(ev.svc, hoy); dd += a.disf; t2 += a.total; });
+    const p2 = t2 ? Math.round(100*dd/t2) : 0;
+    const res = [z.crit ? z.crit+" crítico"+(z.crit>1?"s":"") : "", z.warn ? z.warn+" en atención" : "", z.ok ? z.ok+" en orden" : "", z.none ? z.none+" sin personal" : ""].filter(Boolean).join(", ");
+    return `<tr><td><b>${esc(s || "Sin supervisor asignado")}</b></td>
+      <td style="min-width:180px"><div class="stk">${["crit","warn","ok","none"].filter(k => z[k]).map(k => `<i class="${k}" style="flex:${z[k]}"></i>`).join("")}</div><div class="muted" style="font-size:.82rem;margin-top:4px">${list.length} servicios: ${res}</div></td>
+      <td class="num"><b>${f}</b><span class="muted"> / ${dt}</span></td><td class="num">${cb}</td>
+      <td style="min-width:120px"><div class="minibar"><span><i style="width:${p2}%"></i></span><small>${p2}%</small></div></td>
+      <td class="num"><button class="ghostbtn" data-goserv="${esc(s)}">Ver servicios</button></td></tr>`; }).join("");
+  const att = L.filter(ev => ev.st === "crit" || ev.st === "warn").sort(sorter);
+  const attHtml = att.length ? `<ul class="attn">${att.map(ev => `<li><button data-svc="${esc(ev.svc.k)}"><span class="stpill ${ev.st}">${ev.st === "crit" ? "Crítico" : "Atención"}</span>
+      <span class="nm2"><b>${esc(ev.svc.n)}</b><small>${esc(ev.svc.sup || "Sin supervisor asignado")}. ${ev.worst.abs} de ${ev.worst.dot} fuera${V.mode !== "dia" ? " el "+fmtCorta(ev.worst.day) : ""}${ev.worst.cubre ? `, ${ev.worst.cubre} cubiertos` : ""}</small></span></button></li>`).join("")}</ul>`
+    : `<p class="muted" style="margin:8px 0 0">No hay servicios en rojo ni en amarillo ${per}.</p>`;
+  const S = listasSeguimiento();
+  const segCard = (k, label, extra) => `<button class="segcard ${k}" data-goseg="${k}"><span class="n">${S[k].length}</span><span class="t">${label}${extra ? `<small>${extra}</small>` : ""}</span></button>`;
+  const nRev = S.lic.filter(x => alertaMedica(x.e)).length;
+  $("board").innerHTML = `<div class="toprow"><h2>Resumen ${V.sup === null ? "de toda la zona" : "de "+esc(V.sup || "Sin supervisor asignado")}</h2>${zonaSelect()}</div>
+    ${kpis}
+    <div class="cols">
+      <section class="card" style="flex:999 1 620px"><h3>Zonas de supervisión</h3><p class="sub2">Estado de los servicios ${per}</p>
+        <div class="tscroll"><table class="tbl" style="min-width:640px"><thead><tr><th>Supervisor</th><th>Servicios</th><th class="num">Fuera</th><th class="num">Coberturas</th><th>Disfrutado</th><th><span class="visually-hidden">Acción</span></th></tr></thead><tbody>${filas}</tbody></table></div></section>
+      <section class="card" style="flex:1 1 340px"><h3>Requieren atención</h3><p class="sub2">Servicios en rojo o amarillo ${per}</p>${attHtml}</section>
+    </div>
+    <section class="card"><h3>Seguimiento de personal</h3><p class="sub2">Situación según la última nómina, al ${fmtCorta(hoy)}</p>
+      <div class="segcards">${segCard("sin","Falta asignar vacaciones")}${segCard("lic","Licencias y ART", nRev ? nRev+" con vacaciones para revisar" : "")}${segCard("con","En conflicto")}</div></section>`;
+  bindZona();
+}
+
+/* ============ Vista Seguimiento de personal ============ */
+function listasSeguimiento(){
+  const hoy = todayIso(), out = {sin:[], lic:[], con:[]};
+  M.emps.forEach(e => {
+    if (e.cat === "baja") return;
+    if (V.sup !== null && M.services.get(e.k).sup !== V.sup) return;
+    if (e.cat === "act") { const s = estadoVac(e, hoy); if (s.sinAsignar > 0 || !e.per.length) out.sin.push({e, s}); }
+    else if (e.cat === "med") out[/CONFLICTO/.test(norm(e.sit)) ? "con" : "lic"].push({e});
+  });
+  const by = (a,b) => (M.services.get(a.e.k).sup||"~").localeCompare(M.services.get(b.e.k).sup||"~") || M.services.get(a.e.k).n.localeCompare(M.services.get(b.e.k).n) || a.e.n.localeCompare(b.e.n);
+  Object.values(out).forEach(l => l.sort(by));
+  return out;
+}
+function renderSeguimiento(){
+  const hoy = todayIso(), S = listasSeguimiento(), k = V.seg;
+  const lab = {sin:"Falta asignar vacaciones", lic:"Licencias y ART", con:"En conflicto"};
+  const prox = e => { const f = e.per.filter(([a,b]) => b >= hoy).sort((x,y) => x[0] < y[0] ? -1 : 1)[0]; return f ? fmtCorta(f[0])+" al "+fmtCorta(f[1]) : ""; };
+  const rows = S[k].map(({e, s}) => { const svc = M.services.get(e.k);
+    const sit = k === "sin" ? "Sin asignar" : SIT_TXT(e.sit);
+    const vacTxt = k === "sin" ? `${s.sinAsignar || e.d} de ${e.d} días sin asignar` : (prox(e) || "Sin vacaciones próximas");
+    return `<tr><td><button class="linkish who" data-leg="${esc(e.l)}">${esc(nombreLindo(e.n))}</button><div class="muted" style="font-size:.82rem">Legajo ${esc(e.l)}</div></td>
+      <td><span class="sitpill ${k}">${esc(sit)}</span></td>
+      <td><button class="linkish" data-svc="${esc(e.k)}">${esc(svc.n)}</button></td>
+      <td>${esc(svc.sup || "Sin supervisor asignado")}</td>
+      <td>${esc(vacTxt)}${k !== "sin" && alertaMedica(e) ? `<span class="revchip">Revisar vacaciones</span>` : ""}</td></tr>`; }).join("");
+  $("board").innerHTML = `<div class="toprow"><div><h2>Seguimiento de personal</h2><p class="muted" style="margin:4px 0 0">Situaciones de la última nómina al ${fmtCorta(hoy)} que pueden requerir una decisión</p></div>${zonaSelect()}</div>
+    <div class="segcards" role="tablist" aria-label="Tipo de situación" style="margin-bottom:16px">${["sin","lic","con"].map(x => `<button role="tab" class="segcard ${x}" data-seg="${x}" aria-selected="${x === k}"><span class="n">${S[x].length}</span><span class="t">${lab[x]}</span></button>`).join("")}</div>
+    <section class="card">${S[k].length ? `<div class="tscroll"><table class="tbl" style="min-width:760px"><thead><tr><th>Persona</th><th>Situación</th><th>Servicio</th><th>Supervisor</th><th>Vacaciones</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : `<p class="muted" style="margin:0">No hay personas en esta situación para la zona elegida.</p>`}</section>`;
+  bindZona();
+}
+function setTab(tab){ V.tab = tab; try { history.replaceState(null, "", "#"+tab); } catch(e){} render(); window.scrollTo(0,0); }
+
 function tile(ev){
   const b = document.createElement("button");
   const n = ev.people.length;
@@ -923,6 +1088,13 @@ function toast(t){ const d = document.createElement("div"); d.className = "toast
 
 /* ============ Eventos ============ */
 document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { V.mode = b.dataset.mode; render(); });
+document.querySelectorAll(".tabsbar [data-tab]").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+document.addEventListener("click", e => {
+  const g = e.target.closest("[data-goserv],[data-goseg],[data-seg]"); if (!g) return;
+  if (g.dataset.goserv !== undefined) { V.sup = g.dataset.goserv; setTab("servicios"); }
+  else if (g.dataset.goseg) { V.seg = g.dataset.goseg; setTab("seguimiento"); }
+  else { V.seg = g.dataset.seg; render(); }
+});
 $("prev").onclick = () => shift(-1); $("next").onclick = () => shift(1);
 $("today").onclick = () => { V.date = todayIso(); render(); };
 $("pclose").onclick = closePanel; $("scrim").onclick = closePanel;
