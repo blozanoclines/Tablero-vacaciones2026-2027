@@ -232,6 +232,7 @@ details summary{cursor:pointer;color:var(--brand);font-weight:500}
 .dot.cob{background:transparent;box-shadow:inset 0 0 0 2.5px var(--cob)}
 .cobchip{display:inline-flex;align-items:center;gap:4px;align-self:flex-start;font-size:.76rem;font-weight:600;padding:1px 8px 1px 6px;border-radius:999px;background:color-mix(in srgb,var(--cob) 16%,transparent);color:var(--cob)}
 .cobchip svg{flex:none}
+.tag.nuevo{background:color-mix(in srgb,var(--cob) 16%,transparent);color:color-mix(in srgb,var(--cob) 70%,var(--ink))}
 .medchip{display:inline-flex;align-self:flex-start;font-size:.76rem;font-weight:600;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--med) 16%,transparent);color:var(--med)}
 .note.cubierto{border-color:var(--cob);background:color-mix(in srgb,var(--cob) 12%,var(--surface))}
 .sin{color:var(--muted);font-size:.9rem;margin-top:2px}
@@ -414,6 +415,7 @@ function cargar(silencioso){
 }
 
 
+
 function categoria(sit){
   const k = norm(sit);
   if (!k) return null;
@@ -478,6 +480,15 @@ function derive(){
     const c = {l: lg.padStart(5,"0"), lg, n: L.n, k, sit: L.x};
     coberturas.push(c); ensure(k).cob.push(c);
   });
+  // Ingresos recientes: están en la nómina pero todavía no en la planificación.
+  // Cuentan en la dotación de su servicio (presentes o con la ausencia que indique la nómina), sin vacaciones.
+  if (listado) Object.keys(listado).forEach(lg => {
+    const L = listado[lg]; if (planLegs.has(lg) || esCob(L)) return;
+    const k = norm(L.s); if (!zonaKeys.has(k)) return;
+    const c2 = categoriaNomina(L.x, L.e); if (c2 === "baja") return;
+    const emp = {l: lg.padStart(5,"0"), lg, n: L.n, k, d:0, per:[], malas:[], sit: c2 === "act" ? "" : (L.x || L.e), cat: c2 === "act" ? "act" : c2, revisar:false, movido:false, asign:0, nuevo:true};
+    emps.push(emp); ensure(k).emps.push(emp);
+  });
   const sups = [...new Set([...services.values()].map(s => s.sup))].sort((a,b) => (a===""?1:0)-(b===""?1:0) || a.localeCompare(b));
   M = {services, emps, sups, coberturas};
 }
@@ -534,6 +545,7 @@ const diasEntre = (a,b) => Math.round((fromIso(b)-fromIso(a))/864e5) + 1;
 function estadoVac(e, hoy){
   if (e.cat === "baja") return {k:"baja", rank:9};
   if (e.cat === "med") return {k:"med", rank:8, total:e.d, disf:0};
+  if (e.nuevo) return {k:"nuevo", rank:6.5, disf:0, total:0, sinAsignar:0, cur:null, next:null, done:[], fut:[], segs:[]};
   const per = e.per.slice().sort((x,y) => x[0] < y[0] ? -1 : 1);
   let disf = 0, cur = null; const fut = [], done = [];
   per.forEach(p => { if (p[1] < hoy) { done.push(p); disf += diasEntre(p[0],p[1]); }
@@ -560,6 +572,7 @@ function vacTag(s, e){
     case "nosalio": return {tag:`<span class="tag">Aún no salió</span>`, det:`${s.total} días por disfrutar`, cap:`Primer período: ${fecha(s.next)}`};
     case "completo": return {tag:`<span class="tag okv">Completó</span>`, det:`${s.disf} de ${s.total} días`, cap:`Terminó el ${fmtCorta(s.done[s.done.length-1][1])}`};
     case "faltan": return {tag:`<span class="tag parcial">Faltan días</span>`, det:`disfrutó ${s.disf}, le faltan asignar ${s.sinAsignar}`, cap:"Sin próximo período cargado"};
+    case "nuevo": return {tag:`<span class="tag nuevo">Ingreso reciente</span>`, det:"todavía no está en la planificación", cap:""};
     case "sinplan": return {tag:`<span class="tag">Sin fechas</span>`, det:`${e.d} días sin planificar`, cap:""};
     case "med": { const am = alertaMedica(e);
       return {tag:`<span class="tag med">${esc(SIT_TXT(e.sit))}</span>`, det: am ? (am.tipo === "curso" ? "durante sus vacaciones: revisar" : "con vacaciones asignadas: revisar") : "no puede tomar vacaciones por ahora",
@@ -673,12 +686,13 @@ function renderResumen(r, evals, bySup, sorter){
   const hoy = todayIso();
   const L = V.sup === null ? evals : (bySup.get(V.sup) || []);
   let dot = 0, vac = 0, med = 0, cob = 0, d = 0, tt = 0; const c = {crit:0, warn:0, ok:0, none:0};
+  const nNuevos = L.reduce((a,ev) => a + ev.svc.emps.filter(e => e.nuevo && e.cat !== "baja").length, 0);
   L.forEach(ev => { dot += ev.people.length; ev.people.forEach(p => { if (p.t === "vac") vac++; else if (p.t === "med") med++; });
     cob += ev.cob.length; c[ev.st]++; const a = avanceServicio(ev.svc, hoy); d += a.disf; tt += a.total; });
   const pct = tt ? Math.round(100*d/tt) : 0, fuera = vac + med;
   const per = V.mode === "dia" ? "hoy" : V.mode === "semana" ? "en la semana" : "en el mes";
   const kpis = `<section class="kpis" aria-label="Indicadores">
-    <div class="kpi"><span class="k">Dotación activa</span><span class="v">${dot}</span><span class="d">personas, sin contar bajas</span></div>
+    <div class="kpi"><span class="k">Dotación activa</span><span class="v">${dot}</span><span class="d">personas, sin contar bajas${nNuevos ? `. Incluye ${nNuevos} ${nNuevos === 1 ? "ingreso reciente" : "ingresos recientes"}` : ""}</span></div>
     <div class="kpi"><span class="k">${V.mode === "dia" ? "Fuera del servicio hoy" : "Con ausencias "+per}</span><span class="v">${fuera}</span>
       <span class="bar">${fuera ? `<i style="flex:${vac};background:var(--vac)"></i><i style="flex:${med};background:var(--med)"></i>` : ""}</span>
       <span class="d">${vac} de vacaciones, ${med} por ART, licencia o conflicto</span></div>
@@ -721,7 +735,7 @@ function listasSeguimiento(){
   M.emps.forEach(e => {
     if (e.cat === "baja") return;
     if (V.sup !== null && M.services.get(e.k).sup !== V.sup) return;
-    if (e.cat === "act") { const s = estadoVac(e, hoy); if (s.sinAsignar > 0 || !e.per.length) out.sin.push({e, s}); }
+    if (e.cat === "act") { if (e.nuevo) return; const s = estadoVac(e, hoy); if (s.sinAsignar > 0 || !e.per.length) out.sin.push({e, s}); }
     else if (e.cat === "med") out[/CONFLICTO/.test(norm(e.sit)) ? "con" : "lic"].push({e});
   });
   const by = (a,b) => (M.services.get(a.e.k).sup||"~").localeCompare(M.services.get(b.e.k).sup||"~") || M.services.get(a.e.k).n.localeCompare(M.services.get(b.e.k).n) || a.e.n.localeCompare(b.e.n);
@@ -802,7 +816,8 @@ function openService(k, keepScroll){
   if (desc) al.push(["crit", `Queda sin personal presente${V.mode==="dia" ? "" : " desde el "+fmtCorta(desc.day)}.`]);
   const acum = ev.days.find(x => x.vac && x.med);
   if (acum) al.push(["warn", `Se suman vacaciones con ART o licencias${V.mode==="dia" ? "" : " (por ejemplo, el "+fmtCorta(acum.day)+")"}.`]);
-  const act = svc.emps.filter(e => e.cat === "act");
+  const act = svc.emps.filter(e => e.cat === "act" && !e.nuevo);
+  const nuevosSvc = svc.emps.filter(e => e.nuevo);
   const sinPlan = act.filter(e => !e.per.length && !e.malas.length);
   const parcial = act.filter(e => e.per.length && e.asign < e.d);
   if (sinPlan.length) al.push(["warn", `${sinPlan.length === 1 ? "1 persona no tiene" : sinPlan.length+" personas no tienen"} vacaciones planificadas.`]);
@@ -811,6 +826,7 @@ function openService(k, keepScroll){
   if (malas.length) al.push(["warn", `${malas.length} con fechas para revisar (término anterior al inicio o incompletas).`]);
   svc.emps.forEach(e => { const am = alertaMedica(e); if (am) al.push([am.nivel === "crit" ? "crit" : "warn", nombreLindo(e.n)+": "+am.txt]); });
   const rev = svc.emps.filter(e => e.revisar);
+  if (nuevosSvc.length) al.push(["info", `${nuevosSvc.length === 1 ? "1 ingreso reciente cuenta" : nuevosSvc.length+" ingresos recientes cuentan"} en la dotación. Todavía no ${nuevosSvc.length === 1 ? "está" : "están"} en la planificación de vacaciones.`]);
   if (rev.length) al.push(["info", `${rev.length === 1 ? "1 persona ya no figura" : rev.length+" personas ya no figuran"} en la nómina y se ${rev.length === 1 ? "trata" : "tratan"} como baja.`]);
   const mov = svc.emps.filter(e => e.movido);
   if (mov.length) al.push(["info", `${mov.length === 1 ? "1 persona fue trasladada" : mov.length+" personas fueron trasladadas"} a este servicio según el listado actual.`]);
@@ -845,7 +861,7 @@ function vacSection(svc){
   const av = avanceServicio(svc, hoy);
   const c = k => activos.filter(x => x.s.k === k).length;
   const res = [c("completo") ? c("completo")+" completó" : "", c("curso") ? c("curso")+" de vacaciones" : "",
-    c("parcial")+c("nosalio") ? (c("parcial")+c("nosalio"))+" con períodos pendientes" : "", c("faltan")+c("sinplan") ? (c("faltan")+c("sinplan"))+" sin planificar completo" : ""].filter(Boolean).join(", ");
+    c("parcial")+c("nosalio") ? (c("parcial")+c("nosalio"))+" con períodos pendientes" : "", c("faltan")+c("sinplan") ? (c("faltan")+c("sinplan"))+" sin planificar completo" : "", c("nuevo") ? c("nuevo")+(c("nuevo") === 1 ? " ingreso reciente" : " ingresos recientes") : ""].filter(Boolean).join(", ");
   const row = ({e, s}) => { const v = vacTag(s, e);
     return `<li class="vrow"><div><button class="who" data-leg="${esc(e.l)}">${esc(nombreLindo(e.n))}</button><span class="det">${v.tag} ${esc(v.det)}</span></div>
       <div>${segHtml(s)}${v.cap ? `<div class="cap">${esc(v.cap)}</div>` : ""}</div></li>`; };
@@ -866,10 +882,10 @@ function openPerson(leg){
   const html = `<dl class="kv"><dt>Legajo</dt><dd>${esc(e.l)}</dd><dt>Servicio</dt><dd><button class="linkbtn" data-svc="${esc(e.k)}" style="padding:0">${esc(svc.n)}</button>${e.movido ? ' <span class="tag">trasladado</span>' : ""}</dd>
      <dt>Supervisor</dt><dd>${esc(svc.sup || "Sin supervisor asignado")}</dd><dt>Situación hoy</dt><dd>${esc(ahora)}</dd>
      ${(() => { const am = alertaMedica(e); return am ? `<dt></dt><dd><div class="note ${am.nivel === "crit" ? "crit" : ""}">${esc(am.txt)} Las fechas no se modificaron.</div></dd>` : ""; })()}
-     <dt>Días</dt><dd>${e.asign} asignados de ${e.d} correspondientes</dd>
+     ${e.nuevo ? `<dt></dt><dd><div class="note">Ingreso reciente: figura en la nómina pero todavía no en la planificación de vacaciones. Cuenta en la dotación de su servicio. Para asignarle vacaciones, agregalo a la planificación y cargala desde el panel.</div></dd>` : `<dt>Días</dt><dd>${e.asign} asignados de ${e.d} correspondientes</dd>`}
      ${(() => { const s = estadoVac(e, hoy); if (s.k === "baja" || s.k === "med") return ""; const v = vacTag(s, e);
         return `<dt>Vacaciones</dt><dd>${v.tag} ${esc(v.det)}${segHtml(s) ? `<div style="margin-top:6px">${segHtml(s)}</div>` : ""}${v.cap ? `<div class="cap">${esc(v.cap)}</div>` : ""}</dd>`; })()}</dl>
-     <div class="sect"><h3>Vacaciones planificadas</h3>${pers ? `<ul class="alerts">${pers}</ul>` : `<p style="margin:0;color:var(--muted)">${e.cat === "act" ? "Todavía no tiene fechas cargadas." : "No corresponde por su situación actual."}</p>`}</div>
+     <div class="sect"><h3>Vacaciones planificadas</h3>${pers ? `<ul class="alerts">${pers}</ul>` : `<p style="margin:0;color:var(--muted)">${e.nuevo ? "Todavía no está en la planificación." : e.cat === "act" ? "Todavía no tiene fechas cargadas." : "No corresponde por su situación actual."}</p>`}</div>
      ${e.revisar ? `<div class="note">No figura en la última nómina cargada, por eso se trata como baja y no cuenta en el servicio. Si es un error, vuelve a contar con la próxima carga de nómina.</div>` : ""}`;
   V.open = null;
   openPanel(nombreLindo(e.n), "Consulta por legajo", html);
@@ -958,8 +974,10 @@ function previewListado(F, fname){
   const svcN = (m,k) => (m.services.get(k)||{}).n || k;
   const supN = (m,k) => (m.services.get(k)||{}).sup || "";
   const cambios = [], salen = [], entran = [];
-  Object.values(old).forEach(e => { const n = nuevo[e.lg]; if (!n) { salen.push(e); return; } if (n.k !== e.k) cambios.push([e, n]); });
-  Object.values(nuevo).forEach(n => { if (!old[n.lg]) entran.push(n); });
+  Object.values(old).forEach(e => { const n = nuevo[e.lg]; if (!n) { if (!e.nuevo || map[e.lg]) salen.push(e); return; } if (n.k !== e.k) cambios.push([e, n]); });
+  const ingresos = [];
+  Object.values(nuevo).forEach(n => { if (!old[n.lg]) (n.nuevo ? ingresos : entran).push(n); });
+  const ingresosZona = after.emps.filter(e => e.nuevo).length;
   const nuevasBajas = after.emps.filter(e => e.cat === "baja" && !(old[e.lg] && old[e.lg].cat === "baja"));
   const bajas = nuevasBajas.filter(e => !e.revisar);           // marcadas en la nómina (en proceso de baja)
   const sitTxt = e => e.cat === "act" ? "Presente" : SIT_TXT(e.sit);
@@ -976,13 +994,15 @@ function previewListado(F, fname){
   const knownSvc = new Set(DB.servicios.map(s => norm(s.n)));
   const desconocidos = [...new Set(Object.values(map).map(x => x.s).filter(s => s && !knownSvc.has(norm(s))))];
   const planLegs = new Set(DB.planif.map(e => normLeg(e.l)));
-  const ignorados = Object.keys(map).filter(l => !planLegs.has(l)).length;
+  const ignorados = Object.keys(map).filter(l => !planLegs.has(l) && !/COBERTURA/.test(norm(map[l].x))).length - ingresosZona;
   const li = (e, extra) => `<li>${esc(nombreLindo(e.n))} <small>(${esc(e.l)})</small>${extra ? "<br><small>"+extra+"</small>" : ""}</li>`;
   const list = (t, arr) => arr.length ? `<div class="sect"><h3>${t}</h3><ul class="diff">${arr.join("")}</ul></div>` : "";
-  pending = {tipo: "listado", resumen: `${cambios.length} traslados en la zona, ${salen.length} salen, ${entran.length} entran, ${revisar.length} dejan de figurar (baja), ${bajas.length} en proceso de baja, ${ausNuevas.length} nuevas ausencias, ${vuelven.length} vuelven a estar presentes, ${medVac.length} con ART o licencia médica y vacaciones asignadas`, payload: () => map};
+  pending = {tipo: "listado", resumen: `${cambios.length} traslados en la zona, ${salen.length} salen, ${entran.length} entran, ${revisar.length} dejan de figurar (baja), ${bajas.length} en proceso de baja, ${ausNuevas.length} nuevas ausencias, ${vuelven.length} vuelven a estar presentes, ${medVac.length} con ART o licencia médica y vacaciones asignadas, ${ingresos.length} ingresos recientes nuevos`, payload: () => map};
   $("preview").innerHTML = `<p style="margin:0">Archivo reconocido como <strong>listado actual de empleados</strong> (${esc(fname)}, ${Object.keys(map).length} legajos).</p>
-    <div class="counts"><div><span class="count">${cambios.length}</span>traslados dentro de la zona</div><div><span class="count">${salen.length}</span>salen de la zona</div><div><span class="count">${entran.length}</span>entran a la zona</div><div><span class="count">${revisar.length}</span>dejan de figurar (pasan a baja)</div><div><span class="count">${bajas.length}</span>en proceso de baja</div><div><span class="count">${ausNuevas.length}</span>nuevas ausencias (ART, licencias)</div><div><span class="count">${vuelven.length}</span>vuelven a estar presentes</div><div><span class="count">${ignorados}</span>ingresos nuevos, se ignoran</div></div>
+    <div class="counts"><div><span class="count">${cambios.length}</span>traslados dentro de la zona</div><div><span class="count">${salen.length}</span>salen de la zona</div><div><span class="count">${entran.length}</span>entran a la zona</div><div><span class="count">${revisar.length}</span>dejan de figurar (pasan a baja)</div><div><span class="count">${bajas.length}</span>en proceso de baja</div><div><span class="count">${ausNuevas.length}</span>nuevas ausencias (ART, licencias)</div><div><span class="count">${vuelven.length}</span>vuelven a estar presentes</div><div><span class="count">${ingresos.length}</span>ingresos recientes nuevos en tu zona</div></div>
     ${list("Traslados", cambios.map(([o,n]) => li(n, esc(svcN(before,o.k))+" pasa a "+esc(svcN(after,n.k)) + (supN(before,o.k) !== supN(after,n.k) ? ". Cambia de supervisor: de "+esc(supN(before,o.k)||"sin asignar")+" a "+esc(supN(after,n.k)||"sin asignar") : ""))))}
+    ${list("Ingresos recientes que se suman a la dotación", ingresos.map(e => li(e, "No está en la planificación. "+esc(svcN(after,e.k))+(e.cat !== "act" ? ". "+esc(SIT_TXT(e.sit)) : ""))))}
+    <p style="margin:0;color:var(--muted);font-size:.9rem">En total cuentan ${ingresosZona} ingresos recientes en tu zona. ${ignorados > 0 ? ignorados+" legajos nuevos son de otras zonas y no se tienen en cuenta." : ""}</p>
     ${list("Salen de tu zona", salen.map(e => li(e, "Desde "+esc(svcN(before,e.k))+" hacia "+esc((map[e.lg]||{}).s || "?"))))}
     ${list("Entran a tu zona", entran.map(e => li(e, "Hacia "+esc(svcN(after,e.k)))))}
     ${faltanMuchos ? `<div class="note crit">${revisar.length} personas de tu zona no figuran en este archivo, más del 10% del personal. Revisá que sea la nómina completa antes de aplicar.</div>` : ""}
